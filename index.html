@@ -14,7 +14,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        .letter-tile { transition: transform 0.2s; }
+        .letter-tile:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -46,36 +48,42 @@
             const [score, setScore] = useState(0);
             const [message, setMessage] = useState({ text: '', type: '' });
 
-            // Paths for GitHub Pages
-            const DATA_FILES = ['./subanagram8.txt', './subanagram9-15.txt'];
+            // Ensure these match your GitHub filenames EXACTLY (case-sensitive)
+            const DATA_FILES = ['subanagram8.txt', 'subanagram9-15.txt'];
 
             useEffect(() => {
                 const loadData = async () => {
                     try {
                         setLoading(true);
                         let combinedData = [];
-                        for (const file of DATA_FILES) {
-                            const response = await fetch(file);
-                            if (!response.ok) throw new Error(`Could not find ${file}. Ensure filenames are exact.`);
-                            const text = await response.text();
+                        
+                        for (const fileName of DATA_FILES) {
+                            const response = await fetch(fileName);
                             
+                            if (!response.ok) {
+                                throw new Error(`Could not find "${fileName}". Please check that this file is uploaded to GitHub in the same folder as index.html.`);
+                            }
+                            
+                            const text = await response.text();
                             const lines = text.split(/\r?\n/);
+                            
                             const parsed = lines
                                 .filter(line => line.trim())
                                 .map(line => {
-                                    // Split by Tab as seen in your file snippet
                                     const parts = line.split('\t');
                                     return { 
-                                        word: (parts[0] || '').trim().toUpperCase(),
-                                        id: parts[3] || ''
+                                        word: (parts[0] || '').trim().toUpperCase()
                                     };
                                 })
-                                .filter(item => item.word && item.word.length > 2);
+                                .filter(item => item.word.length > 2);
                             
                             combinedData = [...combinedData, ...parsed];
                         }
 
-                        if (combinedData.length === 0) throw new Error("Word list is empty.");
+                        if (combinedData.length === 0) {
+                            throw new Error("Word list loaded but no valid words were found.");
+                        }
+
                         setWordData(combinedData);
                         setLoading(false);
                     } catch (err) {
@@ -92,11 +100,13 @@
                 setCurrentAnagram(randomEntry);
                 setFoundWords(new Set());
                 setUserInput('');
-                setMessage({ text: 'Find the hidden word!', type: 'info' });
+                setMessage({ text: 'Solve the anagram!', type: 'info' });
             }, [wordData]);
 
             useEffect(() => {
-                if (!loading && wordData.length > 0 && !currentAnagram) startNewGame();
+                if (!loading && wordData.length > 0 && !currentAnagram) {
+                    startNewGame();
+                }
             }, [loading, wordData, currentAnagram, startNewGame]);
 
             const handleCheck = (e) => {
@@ -105,98 +115,97 @@
                 if (!input || !currentAnagram) return;
 
                 if (input === currentAnagram.word) {
-                    if (foundWords.has(input)) {
-                        setMessage({ text: 'Already found!', type: 'warning' });
-                    } else {
-                        setFoundWords(prev => new Set([...prev, input]));
-                        setScore(prev => prev + input.length * 10);
-                        setMessage({ text: 'Correct! You found it!', type: 'success' });
-                    }
+                    setFoundWords(prev => new Set([...prev, input]));
+                    setScore(prev => prev + input.length * 10);
+                    setMessage({ text: 'Correct!', type: 'success' });
+                    setTimeout(startNewGame, 1500);
                 } else {
-                    setMessage({ text: 'Not quite right!', type: 'error' });
+                    setMessage({ text: 'Not correct!', type: 'error' });
                 }
                 setUserInput('');
             };
 
             if (loading) return (
-                <div className="flex flex-col items-center justify-center min-h-screen">
+                <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                    <p className="text-slate-600 font-medium">Loading Words...</p>
+                    <p className="text-slate-600 font-bold animate-pulse">Loading Word Data...</p>
                 </div>
             );
 
             if (error) return (
-                <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
-                    <div className="text-red-500 mb-4 text-5xl">⚠️</div>
-                    <h1 className="text-xl font-bold text-slate-800">Error Loading Data</h1>
-                    <p className="text-slate-600 mt-2">{error}</p>
-                    <p className="text-sm text-slate-400 mt-4 italic">Check that filenames on GitHub match exactly (lowercase/uppercase matter).</p>
+                <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-white">
+                    <div className="text-red-500 mb-4 text-6xl">⚠️</div>
+                    <h1 className="text-2xl font-black text-slate-800 mb-2">Load Error</h1>
+                    <div className="bg-red-50 border border-red-100 p-4 rounded-xl max-w-lg mb-6">
+                        <p className="text-red-700 font-mono text-sm">{error}</p>
+                    </div>
+                    <p className="text-slate-500 text-sm">Ensure filenames are lowercase and match your repository.</p>
                 </div>
             );
 
             return (
-                <div className="min-h-screen p-4 md:p-8 bg-slate-50">
-                    <div className="max-w-2xl mx-auto">
+                <div className="min-h-screen p-4 md:p-8 flex flex-col items-center">
+                    <div className="w-full max-w-2xl">
                         <header className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h1 className="text-2xl font-black text-blue-600">WORD<span className="text-slate-400">SNAP</span></h1>
+                            <h1 className="text-3xl font-black text-blue-600 tracking-tighter">WORD<span className="text-slate-300 font-light">SNAP</span></h1>
                             <div className="text-right">
-                                <div className="text-xs font-bold text-slate-400 uppercase">Score</div>
-                                <div className="text-2xl font-black text-slate-800">{score}</div>
+                                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Score</span>
+                                <span className="text-3xl font-black text-slate-800">{score}</span>
                             </div>
                         </header>
 
-                        <main className="space-y-6">
-                            <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 text-center">
-                                <div className="mb-8">
-                                    <div className="flex flex-wrap justify-center gap-2">
-                                        {currentAnagram?.word.split('').sort(() => Math.random() - 0.5).map((char, i) => (
-                                            <span key={i} className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-blue-50 text-blue-700 text-xl md:text-2xl font-black rounded-xl border-b-4 border-blue-200 uppercase">
-                                                {char}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <form onSubmit={handleCheck} className="relative max-w-md mx-auto">
-                                    <input 
-                                        type="text"
-                                        value={userInput}
-                                        onChange={(e) => setUserInput(e.target.value)}
-                                        placeholder="Solve the anagram..."
-                                        className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl text-lg font-bold outline-none pr-16 transition-all"
-                                    />
-                                    <button type="submit" className="absolute right-2 top-2 bottom-2 px-4 bg-blue-600 text-white rounded-xl">
-                                        <Icon name="CheckCircle2" size={20} />
-                                    </button>
-                                </form>
-
-                                {message.text && (
-                                    <div className={`mt-4 text-xs font-bold py-2 px-4 rounded-lg inline-block ${
-                                        message.type === 'success' ? 'bg-green-100 text-green-700' : 
-                                        message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-                                    }`}>
-                                        {message.text}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                <h3 className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mb-4">Correct Guesses</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {Array.from(foundWords).map(word => (
-                                        <span key={word} className="px-3 py-1 bg-green-50 text-green-700 rounded-lg font-bold border border-green-100 text-sm">
-                                            {word}
-                                        </span>
+                        <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 text-center mb-6">
+                            <div className="mb-10">
+                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6">Unscramble this word</p>
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    {(currentAnagram?.word || "").split('').sort(() => 0.5 - Math.random()).map((char, i) => (
+                                        <div key={i} className="letter-tile w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-slate-50 text-blue-600 text-2xl md:text-3xl font-black rounded-2xl border-b-4 border-slate-200 shadow-sm uppercase">
+                                            {char}
+                                        </div>
                                     ))}
-                                    {foundWords.size === 0 && <p className="text-slate-300 italic text-sm">Solve the puzzle to see words here!</p>}
                                 </div>
                             </div>
 
-                            <button onClick={startNewGame} className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 font-bold transition-colors text-sm">
-                                <Icon name="RefreshCw" size={16} />
-                                New Puzzle
-                            </button>
-                        </main>
+                            <form onSubmit={handleCheck} className="relative max-w-md mx-auto group">
+                                <input 
+                                    type="text"
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    placeholder="Type your answer..."
+                                    className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 focus:bg-white rounded-2xl text-xl font-bold outline-none pr-16 transition-all"
+                                    autoFocus
+                                />
+                                <button type="submit" className="absolute right-2 top-2 bottom-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-100">
+                                    <Icon name="ArrowRight" size={20} />
+                                </button>
+                            </form>
+
+                            {message.text && (
+                                <div className={`mt-6 text-sm font-black py-2 px-6 rounded-full inline-block ${
+                                    message.type === 'success' ? 'bg-green-100 text-green-700' : 
+                                    message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-600'
+                                }`}>
+                                    {message.text}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-6">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Found Words</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {Array.from(foundWords).map(word => (
+                                    <span key={word} className="px-4 py-2 bg-green-50 text-green-700 rounded-xl font-bold border border-green-100 text-sm">
+                                        {word}
+                                    </span>
+                                ))}
+                                {foundWords.size === 0 && <span className="text-slate-300 text-sm italic">Start playing to see your history!</span>}
+                            </div>
+                        </div>
+
+                        <button onClick={startNewGame} className="w-full py-4 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 font-bold transition-colors">
+                            <Icon name="RefreshCw" size={16} />
+                            <span className="text-sm">Skip to Next Word</span>
+                        </button>
                     </div>
                 </div>
             );
