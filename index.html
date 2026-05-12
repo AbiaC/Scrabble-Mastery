@@ -45,7 +45,7 @@
                 Trophy: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2z" /></>,
                 Timer: <><line x1="10" y1="2" x2="14" y2="2" /><line x1="12" y1="14" x2="15" y2="11" /><circle cx="12" cy="14" r="8" /></>,
                 Skull: <><circle cx="9" cy="12" r="1" /><circle cx="15" cy="12" r="1" /><path d="M8 20v2h8v-2" /><path d="M12.5 17l-.5-1-.5 1h1z" /><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20" /></>,
-                Gavel: <><path d="m14 13-5 5" /><path d="m15 13 5-5" /><path d="m9 20 2-2" /><path d="M16 11l-8-8" /><path d="m8 15 2-2" /><path d="m20 8 2-2" /><path d="m7.5 10.5 3 3-3 3-3-3 3-3Z" /></>,
+                Gavel: <><path d="M14 13.5V16.5l-4 4" /><path d="M9.7 10.3L13.5 14l-2.8 2.8-3.7-3.7 2.7-2.8z" /><path d="M16 11l-4-4" /><path d="M10 6l4-4 8 8-4 4-8-8z" />,
                 Star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
                 ArrowRight: <><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></>,
                 Loader2: <path d="M21 12a9 9 0 1 1-6.219-8.56" />
@@ -327,12 +327,12 @@
                 }
             };
 
-            const handleJudgeSubmit = (e) => {
+            const handleSubmit = (e) => {
                 e.preventDefault();
-                if (!judgeInput.trim()) return;
-                const words = judgeInput.toUpperCase().trim().split(/\s+/);
+                if (!Input.trim()) return;
+                const words = Input.toUpperCase().trim().split(/\s+/);
                 const isValid = words.every(w => dictSet.has(w));
-                setJudgeResult(isValid ? 'acceptable' : 'unacceptable');
+                setResult(isValid ? 'acceptable' : 'unacceptable');
             };
 
             const renderHome = () => (
